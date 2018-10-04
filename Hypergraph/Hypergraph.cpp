@@ -1,77 +1,99 @@
 #include "Hypergraph.h"
 
 #include <algorithm>
+#include <assert.h>
+
+template <class T>
+T getElement(std::map<int, T> &v, int id) {
+    auto it = v.find(id);
+    assert(it != v.end() && "Not existing id.");
+
+    return it->second;
+}
 
 template <class T>
 void removeID(std::map<int, T> &v, int id) {
     auto it = v.find(id);
-    if (it == v.end()) {
-        throw std::invalid_argument("Not existing id: " + id);
-    }
-    else {
-        v.erase(it);
-    }
+    assert(it != v.end() && "Not existing id.");
+
+    v.erase(it);
 }
 
-Hypergraph::Hypergraph(bool weightedNodes, bool weightedEdges)
-{
-    this->weightedNodes = weightedNodes;
-    this->weightedEdges = weightedEdges;
+template <class T>
+bool containsID(std::map<int, T> &v, int id) {
+    return v.find(id) != v.end();
 }
 
 
-void Hypergraph::addNode(int id, int weight)
+Hypergraph::Hypergraph(bool weightedNodes, bool weightedEdges) : weightedNodes(weightedNodes), weightedEdges(weightedEdges) {}
+
+
+void Hypergraph::addNode(NodeId id, NodeWeight weight)
 {
-    if (!nodes.insert(std::pair<int, HNode>(id, HNode(id, weight))).second) {
-        throw std::invalid_argument("Duplicate id: " + id);
-    }
+    bool success = nodes.insert(std::pair<int, HNode>(id, HNode(id, weight))).second;
+    assert(success && "Duplicate id.");
 }
 
-void Hypergraph::addEdge(int id, std::vector<int> nodeIds, int weight)
+void Hypergraph::addEdge(HyperedgeId id, HyperedgeVector nodeIds, HyperedgeWeight weight)
 {
+    assert(!nodeIds.empty() && "Edges with no containing nodes are not allowed.");
 
-    if (nodeIds.empty()) {
-        throw std::invalid_argument("Edges with no containing nodes are not allowed.");
-    }
     for (int nId : nodeIds) {
-        if (nodes.find(nId) == nodes.end()) {
-            throw std::invalid_argument("Node contained by edge must be added before.");
-        }
+        assert(nodes.find(nId) != nodes.end() && "Node contained by edge must be added before.");
     }
-    if (!edges.insert(std::pair<int, HEdge>(id, HEdge(id, std::move(nodeIds), weight))).second) {
-        throw std::invalid_argument("Duplicate id: " + id);
-    }
+
+    bool success = edges.insert(std::pair<int, HEdge>(id, HEdge(id, std::move(nodeIds), weight))).second;
+    assert(success && "Duplicate id.");
 }
 
-void Hypergraph::removeNode(int id)
+void Hypergraph::removeNode(NodeId id)
 {
-    for (const auto& entry : edges) {
+    for (auto& entry : edges) {
         auto &edge = entry.second;
-        if (std::find(edge.nodeIds.begin(), edge.nodeIds.end(), id) != edge.nodeIds.end()) {
-            throw std::invalid_argument("Cannot remove node that is part of existing edge.");
+        auto it = std::find(edge.nodeIds.begin(), edge.nodeIds.end(), id);
+
+        if (it != edge.nodeIds.end()) {
+            iter_swap(it, edge.nodeIds.end() - 1);
+            edge.nodeIds.pop_back();
         }
     }
     removeID(nodes, id);
 }
 
-void Hypergraph::removeEdge(int id)
+void Hypergraph::removeEdge(HyperedgeId id)
 {
     removeID(edges, id);
 }
 
-
-Hypergraph::HNode::HNode(int id, int weight)
+bool Hypergraph::containsNode(NodeId id)
 {
-    this->id = id;
-    this->weight = weight;
+    return containsID(nodes, id);
+}
+
+bool Hypergraph::containsEdge(HyperedgeId id)
+{
+    return containsID(edges, id);
+}
+
+NodeWeight Hypergraph::getNodeWeight(NodeId id)
+{
+    return getElement(nodes, id).weight;
+}
+
+HyperedgeWeight Hypergraph::getEdgeWeight(HyperedgeId id)
+{
+    return getElement(edges, id).weight;
 }
 
 
-Hypergraph::HEdge::HEdge(int id, std::vector<int> nodeIds, int weight)
+Hypergraph::HNode::HNode(NodeId id, NodeWeight weight) : id(id), weight(weight) {}
+
+
+Hypergraph::HEdge::HEdge(HyperedgeId id, HyperedgeVector nodeIds, HyperedgeWeight weight) : id(id), weight(weight), nodeIds(std::move(nodeIds)) {};
+
+HyperedgeVector Hypergraph::getContainedNodeIds(HyperedgeId id)
 {
-    this->id = id;
-    this->weight = weight;
-    this->nodeIds = move(nodeIds);
+    return getElement(edges, id).nodeIds;
 }
 
 void Hypergraph::exportToHMetis(std::ostream &os)

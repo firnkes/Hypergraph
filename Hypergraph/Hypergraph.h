@@ -4,20 +4,26 @@
 #include <map>
 #include <iostream>
 
+using NodeId = int;
+using NodeWeight = int;
+using HyperedgeId = int;
+using HyperedgeWeight = int;
+using HyperedgeVector = std::vector<NodeId>;
+
 class Hypergraph
 {
     struct HNode {
-        int id;
-        int weight;
+        NodeId id;
+        NodeWeight weight;
 
-        HNode(int id, int weight);
+        HNode(NodeId id, NodeWeight weight);
     };
 
 
     struct HEdge {
-        int id;
-        int weight;
-        std::vector<int> nodeIds;
+        HyperedgeId id;
+        HyperedgeWeight weight;
+        HyperedgeVector nodeIds;
 
         HEdge(int id, std::vector<int> nodeIds, int weight);
     };
@@ -31,13 +37,20 @@ public:
 
     Hypergraph(bool weightedNodes = false, bool weightedEdges = false);
 
-    void addNode(int id, int weight = 0);
+    void addNode(NodeId id, NodeWeight weight = 0);
     // Nodes that are part of an edge must be added before the edge can be created.
-    void addEdge(int id, std::vector<int> nodeIds, int weight = 0);
+    void addEdge(HyperedgeId id, HyperedgeVector nodeIds, HyperedgeWeight weight = 0);
 
-    // Before a node can be removed, all edges containing this node must be removed.
-    void removeNode(int id);
-    void removeEdge(int id);
+    void removeNode(NodeId id);
+    void removeEdge(HyperedgeId id);
+
+    bool containsNode(NodeId id);
+    bool containsEdge(HyperedgeId id);
+
+    NodeWeight getNodeWeight(NodeId id);
+    HyperedgeWeight getEdgeWeight(HyperedgeId id);
+
+    HyperedgeVector getContainedNodeIds(HyperedgeId id);
 
     void exportToHMetis(std::ostream &os);
 
