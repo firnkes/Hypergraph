@@ -49,7 +49,7 @@ TEST_F(HypergraphTest, addWeightedNode) {
     hyper.addNode(0, 1);
 
     EXPECT_TRUE(hyper.containsNode(0));
-    EXPECT_EQ(hyper.getNodeWeight(0), 1);
+    EXPECT_EQ(1, hyper.getNodeWeight(0));
 }
 
 TEST_F(HypergraphTest, addDuplicateNodeID) {
@@ -67,8 +67,7 @@ TEST_F(HypergraphTest, addUnweightedEdge) {
     hyper.addEdge(0, vec);
 
     EXPECT_TRUE(hyper.containsEdge(0));
-    EXPECT_EQ(hyper.getContainedNodeIds(0), vec);
-
+    EXPECT_EQ(vec, hyper.getContainedNodeIds(0));
 }
 
 
@@ -80,8 +79,8 @@ TEST_F(HypergraphTest, addWeightedEdge) {
     hyper.addEdge(0, vec, 1);
 
     EXPECT_TRUE(hyper.containsEdge(0));
-    EXPECT_EQ(hyper.getEdgeWeight(0), 1);
-    EXPECT_EQ(hyper.getContainedNodeIds(0), vec);
+    EXPECT_EQ(1, hyper.getEdgeWeight(0));
+    EXPECT_EQ(vec, hyper.getContainedNodeIds(0));
 }
 
 TEST_F(HypergraphTest, addDuplicateIDEdge) {
@@ -118,8 +117,19 @@ TEST_F(HypergraphTest, removeNodeThatIsPartOfEdge) {
     hyper.removeNode(2);
 
     EXPECT_FALSE(hyper.containsNode(2));
-    EXPECT_EQ(hyper.getContainedNodeIds(0), std::vector<int>{1});
+    EXPECT_EQ(std::vector<int>{1}, hyper.getContainedNodeIds(0));
 }
+
+TEST_F(HypergraphTest, removeNodeThatIsPartOfEdgeLeadingToEmptyEdge) {
+    hyper.addNode(1);
+
+    hyper.addEdge(0, std::vector<int>{1}, 1);
+    hyper.removeNode(1);
+
+    EXPECT_FALSE(hyper.containsNode(1));
+    EXPECT_FALSE(hyper.containsEdge(0));
+}
+
 
 TEST_F(HypergraphTest, removeExistingEdge) {
     hyper.addNode(1);

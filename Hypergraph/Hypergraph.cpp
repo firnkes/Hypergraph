@@ -48,14 +48,22 @@ void Hypergraph::addEdge(HyperedgeId id, HyperedgeVector nodeIds, HyperedgeWeigh
 
 void Hypergraph::removeNode(NodeId id)
 {
-    for (auto& entry : edges) {
-        auto &edge = entry.second;
-        auto it = std::find(edge.nodeIds.begin(), edge.nodeIds.end(), id);
+    auto iteratorMap = edges.begin();
+    while (iteratorMap != edges.end()) {
+        auto &edge = iteratorMap->second;
+        auto iteratorId = std::find(edge.nodeIds.begin(), edge.nodeIds.end(), id);
 
-        if (it != edge.nodeIds.end()) {
-            iter_swap(it, edge.nodeIds.end() - 1);
-            edge.nodeIds.pop_back();
+        if (iteratorId != edge.nodeIds.end()) {
+            if (edge.nodeIds.size() == 1) {
+                iteratorMap = edges.erase(iteratorMap);
+                continue;
+            }
+            else {
+                iter_swap(iteratorId, edge.nodeIds.end() - 1);
+                edge.nodeIds.pop_back();
+            }
         }
+        iteratorMap++;
     }
     removeID(nodes, id);
 }
