@@ -25,11 +25,11 @@ class Hypergraph
         HyperedgeWeight weight;
         HyperedgeVector nodeIds;
 
-        HEdge(int id, std::vector<int> nodeIds, int weight);
+        HEdge(HyperedgeId id, HyperedgeVector nodeIds, HyperedgeWeight weight);
     };
 
-    std::map<int, HNode> nodes;
-    std::map<int, HEdge> edges;
+    std::vector<HNode> nodes;
+    std::vector<HEdge> edges;
 
 public:
     bool weightedNodes;
@@ -37,12 +37,9 @@ public:
 
     Hypergraph(bool weightedNodes = false, bool weightedEdges = false);
 
-    void addNode(NodeId id, NodeWeight weight = 0);
+    NodeId addNode(NodeWeight weight = 0);
     // Nodes that are part of an edge must be added before the edge can be created.
-    void addEdge(HyperedgeId id, HyperedgeVector nodeIds, HyperedgeWeight weight = 0);
-
-    void removeNode(NodeId id);
-    void removeEdge(HyperedgeId id);
+    HyperedgeId addEdge(HyperedgeVector nodeIds, HyperedgeWeight weight = 0);
 
     bool containsNode(NodeId id);
     bool containsEdge(HyperedgeId id);

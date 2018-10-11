@@ -40,34 +40,32 @@ TEST_F(HypergraphTest, CorrectInitWeightedEdges) {
 
 
 TEST_F(HypergraphTest, addUnweightedNode) {
-    hyper.addNode(0);
+    auto result = hyper.addNode(0);
 
-    EXPECT_TRUE(hyper.containsNode(0));
+    EXPECT_EQ(0, result);
+    EXPECT_TRUE(hyper.containsNode(result));
 }
 
 TEST_F(HypergraphTest, addWeightedNode) {
-    hyper.addNode(0, 1);
+    auto result = hyper.addNode(1);
 
-    EXPECT_TRUE(hyper.containsNode(0));
-    EXPECT_EQ(1, hyper.getNodeWeight(0));
+    EXPECT_EQ(0, result);
+    EXPECT_TRUE(hyper.containsNode(result));
+    EXPECT_EQ(1, hyper.getNodeWeight(result));
 }
 
-TEST_F(HypergraphTest, addDuplicateNodeID) {
-    hyper.addNode(0, 1);
-
-    EXPECT_DEATH(hyper.addNode(0, 2), "");
-}
 
 
 TEST_F(HypergraphTest, addUnweightedEdge) {
     hyper.addNode(1);
     hyper.addNode(2);
 
-    auto vec = std::vector<int>{ 1, 2 };
-    hyper.addEdge(0, vec);
+    auto vec = std::vector<int>{ 0, 1 };
+    auto result = hyper.addEdge(vec);
 
-    EXPECT_TRUE(hyper.containsEdge(0));
-    EXPECT_EQ(vec, hyper.getContainedNodeIds(0));
+    EXPECT_EQ(0, result);
+    EXPECT_TRUE(hyper.containsEdge(result));
+    EXPECT_EQ(vec, hyper.getContainedNodeIds(result));
 }
 
 
@@ -75,74 +73,26 @@ TEST_F(HypergraphTest, addWeightedEdge) {
     hyper.addNode(1);
     hyper.addNode(2);
 
-    auto vec = std::vector<int>{ 1, 2 };
-    hyper.addEdge(0, vec, 1);
+    auto vec = std::vector<int>{ 1, 0 };
+    hyper.addEdge(vec, 1);
 
     EXPECT_TRUE(hyper.containsEdge(0));
     EXPECT_EQ(1, hyper.getEdgeWeight(0));
     EXPECT_EQ(vec, hyper.getContainedNodeIds(0));
 }
 
-TEST_F(HypergraphTest, addDuplicateIDEdge) {
+TEST_F(HypergraphTest, addDuplicateEdge) {
     hyper.addNode(1);
     hyper.addNode(2);
 
-    hyper.addEdge(0, std::vector<int>{1, 2}, 1);
-    EXPECT_DEATH(hyper.addEdge(0, std::vector<int>{2, 3}, 1), "");
+    hyper.addEdge(std::vector<int>{1, 0}, 1);
+    EXPECT_DEATH(hyper.addEdge(std::vector<int>{1, 0}), 0);
 }
 
-TEST_F(HypergraphTest, addNotExistingNode) {
+TEST_F(HypergraphTest, addEdgeWithNotExistingNode) {
     hyper.addNode(1);
 
-    EXPECT_DEATH(hyper.addEdge(0, std::vector<int>{1, 2}), "");
-}
-
-TEST_F(HypergraphTest, removeExistingNode) {
-    hyper.addNode(0);
-    hyper.removeNode(0);
-
-    EXPECT_FALSE(hyper.containsNode(0));
-}
-
-TEST_F(HypergraphTest, removeNotExistingNode) {
-    EXPECT_DEATH(hyper.removeNode(0), "");
-}
-
-
-TEST_F(HypergraphTest, removeNodeThatIsPartOfEdge) {
-    hyper.addNode(1);
-    hyper.addNode(2);
-
-    hyper.addEdge(0, std::vector<int>{1, 2}, 1);
-    hyper.removeNode(2);
-
-    EXPECT_FALSE(hyper.containsNode(2));
-    EXPECT_EQ(std::vector<int>{1}, hyper.getContainedNodeIds(0));
-}
-
-TEST_F(HypergraphTest, removeNodeThatIsPartOfEdgeLeadingToEmptyEdge) {
-    hyper.addNode(1);
-
-    hyper.addEdge(0, std::vector<int>{1}, 1);
-    hyper.removeNode(1);
-
-    EXPECT_FALSE(hyper.containsNode(1));
-    EXPECT_FALSE(hyper.containsEdge(0));
-}
-
-
-TEST_F(HypergraphTest, removeExistingEdge) {
-    hyper.addNode(1);
-    hyper.addNode(2);
-
-    hyper.addEdge(0, std::vector<int>{1, 2});
-    hyper.removeEdge(0);
-
-    EXPECT_FALSE(hyper.containsEdge(0));
-}
-
-TEST_F(HypergraphTest, removeNotExistingEdge) {
-    EXPECT_DEATH(hyper.removeEdge(0), "");
+    EXPECT_DEATH(hyper.addEdge(std::vector<int>{1, 2}), "");
 }
 
 TEST_F(HypergraphTest, containsNode) {
@@ -159,36 +109,36 @@ TEST_F(HypergraphTest, doesNotContainNode) {
 
 
 TEST_F(HypergraphTest, containsEdge) {
-    hyper.addNode(1);
-    hyper.addNode(2);
-    hyper.addEdge(0, std::vector<int>{1, 2});
+    hyper.addNode();
+    hyper.addNode();
+    hyper.addEdge(std::vector<int>{1, 0});
 
     EXPECT_TRUE(hyper.containsEdge(0));
 }
 
 TEST_F(HypergraphTest, doesNotContainEdge) {
-    hyper.addNode(1);
-    hyper.addNode(2);
-    hyper.addEdge(0, std::vector<int>{1, 2});
+    hyper.addNode();
+    hyper.addNode();
+    hyper.addEdge(std::vector<int>{1, 0});
 
     EXPECT_FALSE(hyper.containsEdge(1));
 }
 
 
 TEST_F(HypergraphTest, WritesToHMetisFileFormatWithUnweightedNodesAndEdges) {
-    hyper.addNode(1);
-    hyper.addNode(2);
-    hyper.addNode(3);
-    hyper.addNode(4);
-    hyper.addNode(5);
-    hyper.addNode(6);
-    hyper.addNode(7);
+    auto node0 = hyper.addNode();
+    auto node1 = hyper.addNode();
+    auto node2 = hyper.addNode();
+    auto node3 = hyper.addNode();
+    auto node4 = hyper.addNode();
+    auto node5 = hyper.addNode();
+    auto node6 = hyper.addNode();
 
 
-    hyper.addEdge(0, std::vector<int>{1, 2});
-    hyper.addEdge(1, std::vector<int>{2, 3, 4});
-    hyper.addEdge(2, std::vector<int>{5, 6, 4});
-    hyper.addEdge(3, std::vector<int>{1, 7, 5, 6});
+    hyper.addEdge(std::vector<int>{node1, node2});
+    hyper.addEdge(std::vector<int>{node2, node3, node4});
+    hyper.addEdge(std::vector<int>{node5, node6, node4});
+    hyper.addEdge(std::vector<int>{node1, node0, node5, node6});
 
     std::stringstream stream;
     hyper.exportToHMetis(stream);
@@ -199,7 +149,7 @@ TEST_F(HypergraphTest, WritesToHMetisFileFormatWithUnweightedNodesAndEdges) {
         "1 2 \n"
         "2 3 4 \n"
         "5 6 4 \n"
-        "1 7 5 6 \n"
+        "1 0 5 6 \n"
     );
 
     EXPECT_EQ(expected, result);
@@ -208,19 +158,18 @@ TEST_F(HypergraphTest, WritesToHMetisFileFormatWithUnweightedNodesAndEdges) {
 TEST_F(HypergraphTest, WritesToHMetisFileFormatWithUnweightedNodesAndWeightedEdges) {
     hyper.weightedEdges = true;
 
-    hyper.addNode(1);
-    hyper.addNode(2);
-    hyper.addNode(3);
-    hyper.addNode(4);
-    hyper.addNode(5);
-    hyper.addNode(6);
-    hyper.addNode(7);
+    auto node0 = hyper.addNode();
+    auto node1 = hyper.addNode();
+    auto node2 = hyper.addNode();
+    auto node3 = hyper.addNode();
+    auto node4 = hyper.addNode();
+    auto node5 = hyper.addNode();
+    auto node6 = hyper.addNode();
 
-
-    hyper.addEdge(0, std::vector<int>{1, 2}, 2);
-    hyper.addEdge(1, std::vector<int>{1, 7, 5, 6}, 3);
-    hyper.addEdge(2, std::vector<int>{5, 6, 4}, 8);
-    hyper.addEdge(3, std::vector<int>{2, 3, 4}, 7);
+    hyper.addEdge(std::vector<int>{node1, node2}, 2);
+    hyper.addEdge(std::vector<int>{node1, node0, node5, node6}, 3);
+    hyper.addEdge(std::vector<int>{node5, node6, node4}, 8);
+    hyper.addEdge(std::vector<int>{node2, node3, node4}, 7);
 
     std::stringstream stream;
     hyper.exportToHMetis(stream);
@@ -229,7 +178,7 @@ TEST_F(HypergraphTest, WritesToHMetisFileFormatWithUnweightedNodesAndWeightedEdg
     auto expected = std::string(
         "4 7 1\n"
         "2 1 2 \n"
-        "3 1 7 5 6 \n"
+        "3 1 0 5 6 \n"
         "8 5 6 4 \n"
         "7 2 3 4 \n"
     );
@@ -240,19 +189,18 @@ TEST_F(HypergraphTest, WritesToHMetisFileFormatWithUnweightedNodesAndWeightedEdg
 TEST_F(HypergraphTest, WritesToHMetisFileFormatWithWeightedNodesAndUnweightedEdges) {
     hyper.weightedNodes = true;
 
-    hyper.addNode(1, 5);
-    hyper.addNode(2, 1);
-    hyper.addNode(3, 8);
-    hyper.addNode(4, 7);
-    hyper.addNode(5, 3);
-    hyper.addNode(6, 9);
-    hyper.addNode(7, 3);
+    auto node0 = hyper.addNode(3);
+    auto node1 = hyper.addNode(5);
+    auto node2 = hyper.addNode(1);
+    auto node3 = hyper.addNode(8);
+    auto node4 = hyper.addNode(7);
+    auto node5 = hyper.addNode(3);
+    auto node6 = hyper.addNode(9);
 
-
-    hyper.addEdge(0, std::vector<int>{1, 2});
-    hyper.addEdge(1, std::vector<int>{2, 3, 4});
-    hyper.addEdge(2, std::vector<int>{5, 6, 4});
-    hyper.addEdge(3, std::vector<int>{1, 7, 5, 6});
+    hyper.addEdge(std::vector<int>{node1, node2});
+    hyper.addEdge(std::vector<int>{node2, node3, node4});
+    hyper.addEdge(std::vector<int>{node5, node6, node4});
+    hyper.addEdge(std::vector<int>{node1, node0, node5, node6});
 
     std::stringstream stream;
     hyper.exportToHMetis(stream);
@@ -263,14 +211,14 @@ TEST_F(HypergraphTest, WritesToHMetisFileFormatWithWeightedNodesAndUnweightedEdg
         "1 2 \n"
         "2 3 4 \n"
         "5 6 4 \n"
-        "1 7 5 6 \n"
+        "1 0 5 6 \n"
+        "3\n"
         "5\n"
         "1\n"
         "8\n"
         "7\n"
         "3\n"
         "9\n"
-        "3\n"
     );
 
     EXPECT_EQ(expected, result);
@@ -281,19 +229,18 @@ TEST_F(HypergraphTest, WritesToHMetisFileFormatWithWeightedNodesAndEdges) {
     hyper.weightedNodes = true;
     hyper.weightedEdges = true;
 
-    hyper.addNode(5, 3);
-    hyper.addNode(1, 5);
-    hyper.addNode(2, 1);
-    hyper.addNode(3, 8);
-    hyper.addNode(4, 7);
-    hyper.addNode(6, 9);
-    hyper.addNode(7, 3);
+    auto node0 = hyper.addNode(3);
+    auto node1 = hyper.addNode(5);
+    auto node2 = hyper.addNode(1);
+    auto node3 = hyper.addNode(8);
+    auto node4 = hyper.addNode(7);
+    auto node5 = hyper.addNode(9);
+    auto node6 = hyper.addNode(3);
 
-
-    hyper.addEdge(0, std::vector<int>{1, 2}, 2);
-    hyper.addEdge(1, std::vector<int>{1, 7, 5, 6}, 3);
-    hyper.addEdge(2, std::vector<int>{5, 6, 4}, 8);
-    hyper.addEdge(3, std::vector<int>{2, 3, 4}, 7);
+    hyper.addEdge(std::vector<int>{node1, node2}, 2);
+    hyper.addEdge(std::vector<int>{node1, node0, node5, node6}, 3);
+    hyper.addEdge(std::vector<int>{node5, node6, node4}, 8);
+    hyper.addEdge(std::vector<int>{node2, node3, node4}, 7);
 
     std::stringstream stream;
     hyper.exportToHMetis(stream);
@@ -302,16 +249,35 @@ TEST_F(HypergraphTest, WritesToHMetisFileFormatWithWeightedNodesAndEdges) {
     auto expected = std::string(
         "4 7 11\n"
         "2 1 2 \n"
-        "3 1 7 5 6 \n"
+        "3 1 0 5 6 \n"
         "8 5 6 4 \n"
         "7 2 3 4 \n"
+        "3\n"
         "5\n"
         "1\n"
         "8\n"
         "7\n"
-        "3\n"
         "9\n"
         "3\n"
+    );
+
+    EXPECT_EQ(expected, result);
+}
+
+
+TEST_F(HypergraphTest, WritesToHMetisFileFormatWithUnweightedGraphButWeightedNodesAndEdgesAdded) {
+    auto node0 = hyper.addNode(3);
+    auto node1 = hyper.addNode(5);
+    hyper.addEdge(std::vector<int>{node1, node0}, 2);
+
+
+    std::stringstream stream;
+    hyper.exportToHMetis(stream);
+
+    std::string result = stream.str();
+    auto expected = std::string(
+        "1 2 \n"
+        "1 0 \n"
     );
 
     EXPECT_EQ(expected, result);

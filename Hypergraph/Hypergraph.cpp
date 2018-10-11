@@ -4,83 +4,68 @@
 #include <assert.h>
 
 template <class T>
-T getElement(std::map<int, T> &v, int id) {
-    auto it = v.find(id);
+T getElement(std::vector<T> &v, int id) {
+    auto it = std::find_if(v.begin(), v.end(), [id](T &n) {return n.id == id; });
     assert(it != v.end() && "Not existing id.");
 
-    return it->second;
+    return *it;
 }
 
 template <class T>
-void removeID(std::map<int, T> &v, int id) {
-    auto it = v.find(id);
+void removeId(std::vector<T> &v, int id) {
+    auto it = std::find_if(v.begin(), v.end(), [id](T &n) {return n.id == id; });
     assert(it != v.end() && "Not existing id.");
 
     v.erase(it);
 }
 
 template <class T>
-bool containsID(std::map<int, T> &v, int id) {
-    return v.find(id) != v.end();
+bool containsId(std::vector<T> &v, int id) {
+    return std::find_if(v.begin(), v.end(), [id](T &n) {return n.id == id; }) != v.end();
+}
+
+template <class T>
+int getNextId(std::vector<T> &v) {
+    if (v.empty()) {
+        return 0;
+    }
+    return v.back().id + 1;
 }
 
 
 Hypergraph::Hypergraph(bool weightedNodes, bool weightedEdges) : weightedNodes(weightedNodes), weightedEdges(weightedEdges) {}
 
 
-void Hypergraph::addNode(NodeId id, NodeWeight weight)
+NodeId Hypergraph::addNode(NodeWeight weight)
 {
-    bool success = nodes.insert(std::pair<int, HNode>(id, HNode(id, weight))).second;
-    assert(success && "Duplicate id.");
+    NodeId id = getNextId(nodes);
+    nodes.push_back(HNode(id, weight));
+
+    return id;
 }
 
-void Hypergraph::addEdge(HyperedgeId id, HyperedgeVector nodeIds, HyperedgeWeight weight)
+HyperedgeId Hypergraph::addEdge(HyperedgeVector nodeIds, HyperedgeWeight weight)
 {
     assert(!nodeIds.empty() && "Edges with no containing nodes are not allowed.");
 
     for (int nId : nodeIds) {
-        assert(nodes.find(nId) != nodes.end() && "Node contained by edge must be added before.");
+        assert(containsId(nodes, nId) && "Node contained by edge must be added before.");
     }
 
-    bool success = edges.insert(std::pair<int, HEdge>(id, HEdge(id, std::move(nodeIds), weight))).second;
-    assert(success && "Duplicate id.");
-}
+    HyperedgeId id = getNextId(edges);
+    edges.push_back(HEdge(id, std::move(nodeIds), weight));
 
-void Hypergraph::removeNode(NodeId id)
-{
-    auto iteratorMap = edges.begin();
-    while (iteratorMap != edges.end()) {
-        auto &edge = iteratorMap->second;
-        auto iteratorId = std::find(edge.nodeIds.begin(), edge.nodeIds.end(), id);
-
-        if (iteratorId != edge.nodeIds.end()) {
-            if (edge.nodeIds.size() == 1) {
-                iteratorMap = edges.erase(iteratorMap);
-                continue;
-            }
-            else {
-                iter_swap(iteratorId, edge.nodeIds.end() - 1);
-                edge.nodeIds.pop_back();
-            }
-        }
-        iteratorMap++;
-    }
-    removeID(nodes, id);
-}
-
-void Hypergraph::removeEdge(HyperedgeId id)
-{
-    removeID(edges, id);
+    return id;
 }
 
 bool Hypergraph::containsNode(NodeId id)
 {
-    return containsID(nodes, id);
+    return containsId(nodes, id);
 }
 
 bool Hypergraph::containsEdge(HyperedgeId id)
 {
-    return containsID(edges, id);
+    return containsId(edges, id);
 }
 
 NodeWeight Hypergraph::getNodeWeight(NodeId id)
@@ -129,13 +114,13 @@ void Hypergraph::exportToHMetis(std::ostream &os)
     particular, the i th line (excluding comment lines) contains the vertices that are included in the (i−1)th hyperedge.
     The first integer in each line contains the weight of the respective hyperedge.
     */
-    for (auto &entry : edges) {
-        auto &edge = entry.second;
+    for (auto &edge : edges) {
 
         if (weightedEdges) {
             os << edge.weight << " ";
         }
         for (auto &id : edge.nodeIds) {
+            // Metis - File - Format requires that the ids of the nodes are numbered from 0.. | V | -1.
             os << id << " ";
         }
         os << std::endl;
@@ -145,9 +130,7 @@ void Hypergraph::exportToHMetis(std::ostream &os)
     If weights on nodes are enabled,| V | lines are appended to the input file, containing the weight of the | V | vertices.
     */
     if (weightedNodes) {
-        for (auto &entry : nodes) {
-            auto &node = entry.second;
-
+        for (auto &node : nodes) {
             os << node.weight << std::endl;
         }
     }
