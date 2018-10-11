@@ -9,6 +9,7 @@ using NodeWeight = int;
 using HyperedgeId = int;
 using HyperedgeWeight = int;
 using HyperedgeVector = std::vector<NodeId>;
+using HyperedgeHash = size_t;
 
 class Hypergraph
 {
@@ -24,8 +25,10 @@ class Hypergraph
         HyperedgeId id;
         HyperedgeWeight weight;
         HyperedgeVector nodeIds;
+        // to identify duplicate edges based on same nodeIds
+        HyperedgeHash fingerprint;
 
-        HEdge(HyperedgeId id, HyperedgeVector nodeIds, HyperedgeWeight weight);
+        HEdge(HyperedgeId id, HyperedgeVector nodeIds, HyperedgeWeight weight, HyperedgeHash fingerprint);
     };
 
     std::vector<HNode> nodes;

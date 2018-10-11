@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <boost/functional/hash.hpp>
 
 template <class T>
 T getElement(std::vector<T> &v, int id) {
@@ -47,13 +48,20 @@ NodeId Hypergraph::addNode(NodeWeight weight)
 HyperedgeId Hypergraph::addEdge(HyperedgeVector nodeIds, HyperedgeWeight weight)
 {
     assert(!nodeIds.empty() && "Edges with no containing nodes are not allowed.");
+    std::sort(nodeIds.begin(), nodeIds.end());
 
     for (int nId : nodeIds) {
         assert(containsId(nodes, nId) && "Node contained by edge must be added before.");
     }
 
+    size_t fingerprint = 0;
+    boost::hash_range(fingerprint, nodeIds.begin(), nodeIds.end());
+    for (auto &edge : edges) {
+        assert(edge.fingerprint != fingerprint && "Duplicate edge dedected.");
+    }
+
     HyperedgeId id = getNextId(edges);
-    edges.push_back(HEdge(id, std::move(nodeIds), weight));
+    edges.push_back(HEdge(id, std::move(nodeIds), weight, fingerprint));
 
     return id;
 }
@@ -82,7 +90,8 @@ HyperedgeWeight Hypergraph::getEdgeWeight(HyperedgeId id)
 Hypergraph::HNode::HNode(NodeId id, NodeWeight weight) : id(id), weight(weight) {}
 
 
-Hypergraph::HEdge::HEdge(HyperedgeId id, HyperedgeVector nodeIds, HyperedgeWeight weight) : id(id), weight(weight), nodeIds(std::move(nodeIds)) {};
+Hypergraph::HEdge::HEdge(HyperedgeId id, HyperedgeVector nodeIds, HyperedgeWeight weight, HyperedgeHash fingerprint) : id(id), weight(weight), nodeIds(std::move(nodeIds)), fingerprint
+(fingerprint) {};
 
 HyperedgeVector Hypergraph::getContainedNodeIds(HyperedgeId id)
 {

@@ -73,7 +73,7 @@ TEST_F(HypergraphTest, addWeightedEdge) {
     hyper.addNode(1);
     hyper.addNode(2);
 
-    auto vec = std::vector<int>{ 1, 0 };
+    auto vec = std::vector<int>{ 0, 1 };
     hyper.addEdge(vec, 1);
 
     EXPECT_TRUE(hyper.containsEdge(0));
@@ -86,8 +86,18 @@ TEST_F(HypergraphTest, addDuplicateEdge) {
     hyper.addNode(2);
 
     hyper.addEdge(std::vector<int>{1, 0}, 1);
-    EXPECT_DEATH(hyper.addEdge(std::vector<int>{1, 0}), 0);
+    EXPECT_DEATH(hyper.addEdge(std::vector<int>{1, 0}, 0), "");
 }
+
+
+TEST_F(HypergraphTest, addDuplicateEdgeOtherOrder) {
+    hyper.addNode(1);
+    hyper.addNode(2);
+
+    hyper.addEdge(std::vector<int>{1, 0}, 1);
+    EXPECT_DEATH(hyper.addEdge(std::vector<int>{0, 1}), "");
+}
+
 
 TEST_F(HypergraphTest, addEdgeWithNotExistingNode) {
     hyper.addNode(1);
@@ -148,8 +158,8 @@ TEST_F(HypergraphTest, WritesToHMetisFileFormatWithUnweightedNodesAndEdges) {
         "4 7 \n"
         "1 2 \n"
         "2 3 4 \n"
-        "5 6 4 \n"
-        "1 0 5 6 \n"
+        "4 5 6 \n"
+        "0 1 5 6 \n"
     );
 
     EXPECT_EQ(expected, result);
@@ -178,8 +188,8 @@ TEST_F(HypergraphTest, WritesToHMetisFileFormatWithUnweightedNodesAndWeightedEdg
     auto expected = std::string(
         "4 7 1\n"
         "2 1 2 \n"
-        "3 1 0 5 6 \n"
-        "8 5 6 4 \n"
+        "3 0 1 5 6 \n"
+        "8 4 5 6 \n"
         "7 2 3 4 \n"
     );
 
@@ -210,8 +220,8 @@ TEST_F(HypergraphTest, WritesToHMetisFileFormatWithWeightedNodesAndUnweightedEdg
         "4 7 10\n"
         "1 2 \n"
         "2 3 4 \n"
-        "5 6 4 \n"
-        "1 0 5 6 \n"
+        "4 5 6 \n"
+        "0 1 5 6 \n"
         "3\n"
         "5\n"
         "1\n"
@@ -249,8 +259,8 @@ TEST_F(HypergraphTest, WritesToHMetisFileFormatWithWeightedNodesAndEdges) {
     auto expected = std::string(
         "4 7 11\n"
         "2 1 2 \n"
-        "3 1 0 5 6 \n"
-        "8 5 6 4 \n"
+        "3 0 1 5 6 \n"
+        "8 4 5 6 \n"
         "7 2 3 4 \n"
         "3\n"
         "5\n"
@@ -277,7 +287,7 @@ TEST_F(HypergraphTest, WritesToHMetisFileFormatWithUnweightedGraphButWeightedNod
     std::string result = stream.str();
     auto expected = std::string(
         "1 2 \n"
-        "1 0 \n"
+        "0 1 \n"
     );
 
     EXPECT_EQ(expected, result);
